@@ -19,11 +19,11 @@ import java.time.LocalDate;
  * Pojmenování properties musí zůstat zachováno, protože odpovídá názvům sloupečků v databázové tabulce. Stejně tak musí být zachováno jméno třídy, odpovídá
  * jménu tabulky v databázi.
  */
-@Entity
-public class Osoba {
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+@Entity // validace
+public class Osoba { // musí být zachováno jméno třídy, odpovídá jménu tabulky v databázi
+  @Id // primární identifikátor entity
+  @GeneratedValue(strategy = GenerationType.IDENTITY) // generování primárního klíče (ID), v entitě označuje hodnotu, která je automaticky generována - v tomto případě je generována databází
+  private Long id; // pojmenování properties musí zůstat zachováno, protože odpovídá názvům sloupečků v databázové tabulce
 
   @Length(max = 100)
   @NotBlank
@@ -49,7 +49,7 @@ public class Osoba {
   @Pattern(regexp = "\\+?\\d+")
   private String telefon;
 
-  public Osoba() {
+  public Osoba() { // bezparametrický konstruktor
   }
 
   public Osoba(Long id, String jmeno, String prijmeni, LocalDate datumNarozeni, String adresa, String email, String telefon) {

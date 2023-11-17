@@ -1,23 +1,31 @@
 package cz.czechitas.java2webapps.lekce8.controller;
 
 import cz.czechitas.java2webapps.lekce8.entity.Osoba;
+import cz.czechitas.java2webapps.lekce8.repository.OsobaRepository;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class OsobaController {
 
-  private final List<Osoba> seznamOsob = List.of(
-          new Osoba(1L, "Božena", "Němcová", LocalDate.of(1820, 2, 4), "Vídeň", null, null)
-  );
+  @Autowired //  označuje konstruktor, který Spring použije pro vytvoření objektu a dosazení požadovaných parametrů
+  private final OsobaRepository osobaRepository;
+
+  public OsobaController(OsobaRepository osobaRepository) { // dědí z crud
+    this.osobaRepository = osobaRepository;
+  }
 
   @InitBinder
   public void nullStringBinding(WebDataBinder binder) {
@@ -27,9 +35,9 @@ public class OsobaController {
 
   @GetMapping("/")
   public ModelAndView seznam() {
-    //TODO načíst seznam osob
+    // načíst seznam osob
     return new ModelAndView("seznam")
-            .addObject("osoby", seznamOsob);
+            .addObject("osoby", osobaRepository.findAll());
   }
 
   @GetMapping("/novy")
@@ -43,15 +51,21 @@ public class OsobaController {
     if (bindingResult.hasErrors()) {
       return "detail";
     }
-    //TODO uložit údaj o nové osobě
+    // uložit údaj o nové osobě
+    osoba.setId(null); // pojistka při přidání nové osoby
+    osobaRepository.save(osoba);
     return "redirect:/";
   }
 
-  @GetMapping("/{id:[0-9]+}")
+  @GetMapping("/{id:[0-9]+}") // číslice 0 až 9 a může tam být 1 až N takových znaků
   public ModelAndView detail(@PathVariable long id) {
-    //TODO načíst údaj o osobě
+    // načíst údaj o osobě
+    Optional<Osoba> osoba = osobaRepository.findById(id); // metoda vrací optional
+    if (osoba.isEmpty()) { // pokud se ID v DB nenašlo -> 404 not found
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND); // 404 not found
+    }
     return new ModelAndView("detail")
-            .addObject("osoba", seznamOsob.get(0));
+            .addObject("osoba", osoba.get());
   }
 
   @PostMapping("/{id:[0-9]+}")
@@ -59,13 +73,15 @@ public class OsobaController {
     if (bindingResult.hasErrors()) {
       return "detail";
     }
-    //TODO uložit údaj o osobě
+    // uložit údaj o osobě
+    osobaRepository.save(osoba); // save uloží nový záznam nebo aktualizuje stávající
     return "redirect:/";
   }
 
   @PostMapping(value = "/{id:[0-9]+}", params = "akce=smazat")
   public String smazat(@PathVariable long id) {
-    //TODO smazat údaj o osobě
+    // smazat údaj o osobě
+    osobaRepository.deleteById(id);
     return "redirect:/";
   }
 
